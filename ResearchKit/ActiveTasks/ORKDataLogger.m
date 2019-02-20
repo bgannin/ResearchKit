@@ -136,7 +136,7 @@ static NSString *const ORKDataLoggerManagerConfigurationFilename = @".ORKDataLog
     const char *path = [self fileSystemRepresentation];
     int rc = setxattr(path, attr, data.bytes, data.length, 0, 0);
     if (rc != 0) {
-        if (error) {
+        if (error != NULL) {
             *error = [NSError errorWithDomain:NSCocoaErrorDomain code:rc userInfo:@{NSLocalizedDescriptionKey: ORKLocalizedString(@"ERROR_DATALOGGER_SET_ATTRIBUTE", nil)}];
         }
     }
@@ -249,7 +249,7 @@ static void *ORKObjectObserverContext = &ORKObjectObserverContext;
     }
     @catch (NSException *exception) {
         result = NO;
-        if (error) {
+        if (error != NULL) {
             *error = [NSError errorWithDomain:ORKErrorDomain code:ORKErrorException userInfo:@{@"exception": exception}];
         }
     }
@@ -286,7 +286,7 @@ static void *ORKObjectObserverContext = &ORKObjectObserverContext;
     
     if (!success) {
         [self rollbackToCheckpoint:checkpoint fileHandle:fileHandle];
-        if (error) {
+        if (error != NULL) {
             *error = errorOut;
         }
     }
@@ -403,7 +403,7 @@ static NSInteger _ORKJSON_terminatorLength = 0;
     // objects form part of a single array.
     __block BOOL success = YES;
     __block NSError *localError;
-    if (error) {
+    if (error != NULL) {
         localError = *error;
     }
     [objects enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -757,7 +757,7 @@ static NSInteger _ORKJSON_terminatorLength = 0;
         }
     }
     
-    if (error) {
+    if (error != NULL) {
         *error = errorOut;
     }
     return (errorOut ? NO : YES);
@@ -802,7 +802,7 @@ static NSInteger _ORKJSON_terminatorLength = 0;
         NSString *filePath = [url path];
         BOOL success = [fileManager createFileAtPath:filePath contents:nil attributes:nil];
         if (!success) {
-            if (error) {
+            if (error != NULL) {
                 *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:@{NSLocalizedDescriptionKey: ORKLocalizedString(@"ERROR_DATALOGGER_CREATE_FILE", nil)}];
             }
             return nil;
