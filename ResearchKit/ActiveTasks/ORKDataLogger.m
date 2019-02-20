@@ -974,14 +974,15 @@ static NSInteger _ORKJSON_terminatorLength = 0;
 - (BOOL)queue_removeUploadedFiles:(NSArray<NSURL *> *)fileURLs withError:(NSError **)errorOut {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     __block NSMutableArray *errors = [NSMutableArray array];
+    __block NSError *error = nil;
     BOOL success = [self queue_enumerateLogs:^(NSURL *logFileUrl, BOOL *stop) {
         if ([fileURLs containsObject:logFileUrl]) {
-            NSError *errorOut = nil;
             BOOL uploaded = [logFileUrl ork_isUploaded];
             
             if (uploaded) {
-                if (![fileManager removeItemAtURL:logFileUrl error:&errorOut]) {
-                    [errors addObject:errorOut];
+                if (![fileManager removeItemAtURL:logFileUrl error:&error]) {
+                    [errors addObject:error];
+                    error = nil;
                 }
             } else {
                 // File was requested to be removed, but was not marked uploaded
@@ -990,16 +991,17 @@ static NSInteger _ORKJSON_terminatorLength = 0;
                                                   userInfo:@{NSLocalizedDescriptionKey: ORKLocalizedString(@"ERROR_DATALOGGER_COULD_NOT_MAORK", nil), @"url": logFileUrl}]];
             }
         }
-    } error:errorOut];
+    } error:&error];
+    if (!success && error) {
+        [errors addObject:error];
+        error = nil;
+    }
     
     // Reporting multiple errors
-    if (errors.count) {
-        if (!success && errorOut && *errorOut) {
-            [errors addObject:*errorOut];
-            *errorOut = [NSError errorWithDomain:ORKErrorDomain
-                                         code:ORKErrorMultipleErrors
-                                     userInfo:@{NSLocalizedDescriptionKey: ORKLocalizedString(@"ERROR_DATALOGGER_MULTIPLE", nil), @"errors": errors}];
-        }
+    if (errorOut != NULL) {
+        *errorOut = [NSError errorWithDomain:ORKErrorDomain
+                                        code:ORKErrorMultipleErrors
+                                    userInfo:@{NSLocalizedDescriptionKey: ORKLocalizedString(@"ERROR_DATALOGGER_MULTIPLE", nil), @"errors": errors}];
         success = NO;
     }
     return success;
@@ -1265,8 +1267,8 @@ static NSString *const LoggerConfigurationsKey = @"loggers";
             @throw [NSException exceptionWithName:NSGenericException reason:@"URL is not from a known logger" userInfo:@{@"url":url}];
         }
         
-        NSError *errorOut = nil;
-        BOOL itemSuccess = [[NSFileManager defaultManager] removeItemAtURL:url error:&errorOut];
+        NSError *error = nil;
+        BOOL itemSuccess = [[NSFileManager defaultManager] removeItemAtURL:url error:&error];
         if (!itemSuccess) {
             [notRemoved addObject:url];
             success = NO;
@@ -1297,14 +1299,14 @@ static NSString *const LoggerConfigurationsKey = @"loggers";
             @throw [NSException exceptionWithName:NSGenericException reason:@"URL is not from a known logger" userInfo:@{@"url":url}];
         }
         
-        NSError *errorOut = nil;
-        BOOL itemSuccess = [logger markFileUploaded:NO atURL:url error:&errorOut];
+        NSError *error = nil;
+        BOOL itemSuccess = [logger markFileUploaded:NO atURL:url error:&error];
         if (!itemSuccess) {
             [notRemoved addObject:url];
             success = NO;
         }
     }
-    if (errorOut && notRemoved.count) {
+    if (errorOut != NULL && notRemoved.count) {
         *errorOut = [NSError errorWithDomain:ORKErrorDomain code:ORKErrorMultipleErrors userInfo:@{@"notRemoved":notRemoved}];
     }
     return success;
