@@ -395,12 +395,12 @@
 "KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_1_RIGHT" = "Sit down on the edge of a chair. When you begin you will put your device on your right knee for a measurement. Please turn the sound on your device on so you can hear instructions.";
 "KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_2_LEFT" = "Place your device on your left knee with the screen facing out, as pictured.";
 "KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_2_RIGHT" = "Place your device on your right knee with the screen facing out, as pictured.";
-"KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_LEFT" = "When ready, tap the screen to begin and extend your left knee as far as you can. Tap again when you are done.";
-"KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_RIGHT" = "When ready, tap the screen to begin and extend your right knee as far as you can. Tap again when you are done.";
-"KNEE_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_LEFT" = "Place your device on your left knee";
-"KNEE_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_RIGHT" = "Place your device on your right knee";
-"KNEE_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_LEFT" = "Extend your left knee. Then tap anywhere.";
-"KNEE_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_RIGHT" = "Extend your right knee. Then tap anywhere.";
+"KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_LEFT" = "When ready, tap the screen to begin and extend your left knee as far as you can. Return to the start position and tap again when you are done.";
+"KNEE_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_RIGHT" = "When ready, tap the screen to begin and extend your right knee as far as you can. Return to the start position and tap again when you are done.";
+"KNEE_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_LEFT" = "Place your device on your left knee. Tap the screen and extend your left knee as far as you can.";
+"KNEE_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_RIGHT" = "Place your device on your right knee. Tap the screen and extend your right knee as far as you can.";
+"KNEE_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_LEFT" = "When you are done, return your left knee to the start position. Then tap anywhere.";
+"KNEE_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_RIGHT" = "When you are done, return your right knee to the start position. Then tap anywhere.";
 
 /* Shoulder Range of Motion active task */
 "SHOULDER_RANGE_OF_MOTION_TITLE_LEFT" = "Left Shoulder Range of Motion";
@@ -411,12 +411,12 @@
 "SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_1_RIGHT" = "When you begin you will put your device on your right shoulder for a measurement. Please turn the sound on your device on so you can hear instructions.";
 "SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_2_LEFT" = "Place your device on your left shoulder with the screen facing out, as pictured.";
 "SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_2_RIGHT" = "Place your device on your right shoulder with the screen facing out, as pictured.";
-"SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_LEFT" = "When ready, tap the screen to begin and raise your left arm as far as you can. Tap again when you are done.";
-"SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_RIGHT" = "When ready, tap the screen to begin and raise your right arm as far as you can. Tap again when you are done.";
-"SHOULDER_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_LEFT" = "Place your device on your left shoulder";
-"SHOULDER_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_RIGHT" = "Place your device on your right shoulder";
-"SHOULDER_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_LEFT" = "Lift your left arm up. Then tap anywhere.";
-"SHOULDER_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_RIGHT" = "Lift your right arm up. Then tap anywhere.";
+"SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_LEFT" = "When ready, tap the screen to begin and raise your left arm as far as you can. Return to the start position and tap again when you are done.";
+"SHOULDER_RANGE_OF_MOTION_TEXT_INSTRUCTION_3_RIGHT" = "When ready, tap the screen to begin and raise your right arm as far as you can. Return to the start position and tap again when you are done.";
+"SHOULDER_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_LEFT" = "Place your device on your left shoulder. Tap the screen and raise your left arm to the front as far as you can.";
+"SHOULDER_RANGE_OF_MOTION_TOUCH_ANYWHERE_STEP_INSTRUCTION_RIGHT" = "Place your device on your right shoulder. Tap the screen and raise your right arm to the front as far as you can.";
+"SHOULDER_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_LEFT" = "When you are done, return your left arm to the start position. Then tap anywhere.";
+"SHOULDER_RANGE_OF_MOTION_SPOKEN_INSTRUCTION_RIGHT" = "When you are done, return your right arm to the start position. Then tap anywhere.";
 
 /* Timed walk active task. */
 "TIMED_WALK_TITLE" = "Timed Walk";
@@ -550,6 +550,24 @@
 "SPEECH_IN_NOISE_STEP_TEXT" = "A sentence mixed with background noise at a randomized Signal to Noise Ratio (SNR) will be played only once.";
 "SPEECH_IN_NOISE_SPEAK_TITLE" = "Speak";
 "SPEECH_IN_NOISE_SPEAK_TEXT" = "Repeat what you heard.";
+
+/* Touch Ability active task. */
+"TOUCH_ABILITY_INSTRUCTION_TITLE" = "Touch Ability Activity";
+"TOUCH_ABILITY_INSTRUCTION_DETAIL" = "This activity will measure your touch screen usability. Please locate a comfortable spot to proceed with this activity.";
+"TOUCH_ABILITY_TAP_TITLE" = "Tap Ability";
+"TOUCH_ABILITY_TAP_TEXT" = "Please click on the squares appear on the screen. Square will disappear upon clicking. Please await for next square to appear before next click.";
+"TOUCH_ABILITY_LONG_PRESS_TITLE" = "Long Press Ability";
+"TOUCH_ABILITY_LONG_PRESS_TEXT" = "Please long press on the squares appear on the screen for at least one second before lift up from screen. Once finger lift up, square will disappear despite whether it is long pressed for one second or not. Please await for next square to appear before next press.";
+"TOUCH_ABILITY_SWIPE_TITLE" = "Swipe Ability";
+"TOUCH_ABILITY_SWIPE_TEXT" = "Please swipe in direction of the arrow on the screen. arrow will disappear upon swiping completion. Please await for next arrow to appear before next swipe.";
+"TOUCH_ABILITY_VERTICAL_SCROLL_TITLE" = "Vertical Scroll Ability";
+"TOUCH_ABILITY_VERTICAL_SCROLL_TEXT" = "This test will require you to scroll through a list of number, and drag the item labeled by the color into a dotted line box. Once hand is lifted up from the list and stop scrolling for one second, list and box will disappear. Please await for next list to appear before next test.";
+"TOUCH_ABILITY_HORIZONTAL_SCROLL_TITLE" = "Horizontal Scroll Ability";
+"TOUCH_ABILITY_HORIZONTAL_SCROLL_TEXT" = "This test will require you to scroll through a horizontal list of number, and drag the item labeled by the color into a dotted line box. Once hand is lifted up from the list and stop scrolling for one second, list and box will disappear. Please await for next list to appear before next trial.";
+"TOUCH_ABILITY_PINCH_TITLE" = "Pinch Ability";
+"TOUCH_ABILITY_PINCH_TEXT" = "Please use two finger pinching gesture to readjust the size of cube similar the dash line box. Once completing and lifting up your fingers, cube and box will disappear. Please await for cube and box to appear before next trial.";
+"TOUCH_ABILITY_ROTATION_TITLE" = "Rotation Ability";
+"TOUCH_ABILITY_ROTATION_TEXT" = "Please use two finger rotating gesture to readjust the arrow to align with dashed arrow.  Once completing and lifting up your fingers, arrow will disappear. Please await for cube and box to appear before next trial.";
 
 /* Potentially user visible error messages. */
 "ERROR_DATALOGGER_CREATE_FILE" = "Could not create file";

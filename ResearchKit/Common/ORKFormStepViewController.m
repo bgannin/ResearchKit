@@ -32,7 +32,7 @@
 #import "ORKFormStepViewController.h"
 
 #import "ORKCaption1Label.h"
-#import "ORKChoiceViewCell.h"
+#import "ORKChoiceViewCell_Internal.h"
 #import "ORKFormItemCell.h"
 #import "ORKFormSectionTitleLabel.h"
 #import "ORKStepHeaderView_Internal.h"
@@ -50,6 +50,7 @@
 #import "ORKFormItem_Internal.h"
 #import "ORKResult_Private.h"
 #import "ORKStep_Private.h"
+#import "ORKResultPredicate.h"
 
 #import "ORKHelpers_Internal.h"
 #import "ORKSkin.h"
@@ -273,7 +274,7 @@
 @end
 
 
-@interface ORKFormStepViewController () <UITableViewDataSource, UITableViewDelegate, ORKFormItemCellDelegate, ORKTableContainerViewDelegate>
+@interface ORKFormStepViewController () <UITableViewDataSource, UITableViewDelegate, ORKFormItemCellDelegate, ORKTableContainerViewDelegate, ORKTextChoiceCellGroupDelegate, ORKChoiceOtherViewCellDelegate>
 
 @property (nonatomic, strong) ORKTableContainerView *tableContainer;
 @property (nonatomic, strong) UITableView *tableView;
@@ -295,8 +296,10 @@
     ORKNavigationContainerView *_navigationFooterView;
     NSMutableSet *_formItemCells;
     NSMutableArray<ORKTableSection *> *_sections;
+    NSMutableArray<ORKTableSection *> *_allSections;
+    NSMutableArray<ORKFormItem *> *_hiddenFormItems;
     BOOL _skipped;
-    ORKFormItemCell *_currentFirstResponderCell;
+    UITableViewCell *_currentFirstResponderCell;
     NSArray<NSLayoutConstraint *> *_constraints;
 }
 
@@ -306,9 +309,9 @@
         NSAssert([result isKindOfClass:[ORKStepResult class]], @"Expect a ORKStepResult instance");
 
         NSArray *resultsArray = [(ORKStepResult *)result results];
-        for (ORKQuestionResult *result in resultsArray) {
-            id answer = result.answer ? : ORKNullAnswerValue();
-            [self setAnswer:answer forIdentifier:result.identifier];
+        for (ORKQuestionResult *currentResult in resultsArray) {
+            id answer = currentResult.answer ? : ORKNullAnswerValue();
+            [self setAnswer:answer forIdentifier:currentResult.identifier];
         }
         self.originalAnswers = [[NSDictionary alloc] initWithDictionary:self.savedAnswers];
     }
@@ -504,6 +507,7 @@
     
     if (self.isViewLoaded && self.step) {
         [self buildSections];
+        [self hideSections];
         
         _formItemCells = [NSMutableSet new];
         
@@ -626,7 +630,7 @@
 - (void)buildSections {
     NSArray *items = [self allFormItems];
     
-    _sections = [NSMutableArray new];
+    _allSections = [NSMutableArray new];
     ORKTableSection *section = nil;
     
     NSArray *singleSectionTypes = @[@(ORKQuestionTypeBoolean),
@@ -638,8 +642,8 @@
         // Section header
         if ([item impliedAnswerFormat] == nil) {
             // Add new section
-            section = [[ORKTableSection alloc] initWithSectionIndex:_sections.count];
-            [_sections addObject:section];
+            section = [[ORKTableSection alloc] initWithSectionIndex:_allSections.count];
+            [_allSections addObject:section];
             
             // Save title
             section.title = item.text;
@@ -657,8 +661,8 @@
             // Items require individual section
             if (multiCellChoices || multilineTextEntry || scale) {
                 // Add new section
-                section = [[ORKTableSection alloc]  initWithSectionIndex:_sections.count];
-                [_sections addObject:section];
+                section = [[ORKTableSection alloc]  initWithSectionIndex:_allSections.count];
+                [_allSections addObject:section];
                 
                 // Save title
                 section.title = item.text;
@@ -670,8 +674,8 @@
             } else {
                 // In case no section available, create new one.
                 if (section == nil) {
-                    section = [[ORKTableSection alloc]  initWithSectionIndex:_sections.count];
-                    [_sections addObject:section];
+                    section = [[ORKTableSection alloc]  initWithSectionIndex:_allSections.count];
+                    [_allSections addObject:section];
                 }
                 [section addFormItem:item];
             }
@@ -704,8 +708,11 @@
 }
 
 - (BOOL)allNonOptionalFormItemsHaveAnswers {
+    ORKTaskResult *taskResult = self.taskViewController.result;
     for (ORKFormItem *item in [self formItems]) {
-        if (!item.optional) {
+        BOOL hideFormItem = [item.hidePredicate evaluateWithObject:@[taskResult]
+                                             substitutionVariables:@{ORKResultPredicateTaskIdentifierVariableName : taskResult.identifier}];
+        if (!item.optional && !hideFormItem) {
             id answer = _savedAnswers[item.identifier];
             if (ORKIsAnswerEmpty(answer) || ![item.impliedAnswerFormat isAnswerValid:answer]) {
                 return NO;
@@ -737,6 +744,58 @@
 - (void)updateButtonStates {
     _navigationFooterView.continueEnabled = [self continueButtonEnabled];
     _navigationFooterView.skipEnabled = [self skipButtonEnabled];
+}
+
+- (void)hideSections {
+    
+    NSArray<ORKTableSection *> *oldSections = _sections;
+    _sections = [NSMutableArray new];
+    _hiddenFormItems = [NSMutableArray new];
+    
+    ORKTaskResult *taskResult = self.taskViewController.result;
+    NSArray<ORKFormItem *> *formItems = [self allFormItems];
+    
+    NSMutableIndexSet *sectionsToInsert = [NSMutableIndexSet indexSet];
+    NSMutableIndexSet *sectionsToDelete = [NSMutableIndexSet indexSet];
+    
+    [formItems enumerateObjectsUsingBlock:^(ORKFormItem * _Nonnull formItem, NSUInteger idx, BOOL * _Nonnull stop) {
+        BOOL hideFormItem = [formItem.hidePredicate evaluateWithObject:@[taskResult]
+                                                 substitutionVariables:@{ORKResultPredicateTaskIdentifierVariableName : taskResult.identifier}];
+        ORKTableSection *section = _allSections[idx];
+        if (!hideFormItem) {
+            [_sections addObject:section];
+            if (![oldSections containsObject:section]) {
+                [sectionsToInsert addIndex:_sections.count - 1];
+            }
+        } else {
+            if ([oldSections containsObject:section]) {
+                [sectionsToDelete addIndex:[oldSections indexOfObject:section]];
+            }
+            [_hiddenFormItems addObject:formItem];
+        }
+    }];
+    
+    if (_tableView != nil) {
+        if (sectionsToInsert.count == 0 && sectionsToDelete.count == 0) {
+            return;
+        }
+        [_tableView beginUpdates];
+        if (sectionsToDelete.count > 0) {
+            [_tableView deleteSections:sectionsToDelete withRowAnimation:UITableViewRowAnimationAutomatic];
+        }
+        if (sectionsToInsert.count > 0) {
+            [_tableView insertSections:sectionsToInsert withRowAnimation:UITableViewRowAnimationAutomatic];
+        }
+        [_tableView endUpdates];
+    }
+}
+
+- (NSIndexPath *)unhiddenIndexPathForIndexPath:(NSIndexPath *)hiddenIndexPath {
+    return [NSIndexPath indexPathForRow:hiddenIndexPath.row inSection:[_allSections indexOfObject:_sections[hiddenIndexPath.section]]];
+}
+
+- (NSIndexPath *)hiddenIndexPathForIndexPath:(NSIndexPath *)unhiddenIndexPath {
+    return [NSIndexPath indexPathForRow:unhiddenIndexPath.row inSection:[_sections indexOfObject:_allSections[unhiddenIndexPath.section]]];
 }
 
 #pragma mark Helpers
@@ -782,7 +841,11 @@
     
     NSMutableArray *qResults = [NSMutableArray new];
     for (ORKFormItem *item in items) {
-
+        
+        if ([_hiddenFormItems containsObject:item]) {
+            continue;
+        }
+        
         // Skipped forms report a "null" value for every item -- by skipping, the user has explicitly said they don't want
         // to report any values from this form.
         
@@ -860,7 +923,8 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSString *identifier = [NSString stringWithFormat:@"%ld-%ld",(long)indexPath.section, (long)indexPath.row];
+    NSIndexPath *unhiddenIndexPath = [self unhiddenIndexPathForIndexPath:indexPath];
+    NSString *identifier = [NSString stringWithFormat:@"%ld-%ld",(long)unhiddenIndexPath.section, (long)unhiddenIndexPath.row];
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:identifier];
     
@@ -874,8 +938,13 @@
         
         if (section.textChoiceCellGroup) {
             [section.textChoiceCellGroup setAnswer:answer];
+            section.textChoiceCellGroup.delegate = self;
             ORKChoiceViewCell *choiceViewCell = nil;
-            choiceViewCell = [section.textChoiceCellGroup cellAtIndexPath:indexPath withReuseIdentifier:identifier];
+            choiceViewCell = [section.textChoiceCellGroup cellAtIndexPath:unhiddenIndexPath withReuseIdentifier:identifier];
+            if ([choiceViewCell isKindOfClass:[ORKChoiceOtherViewCell class]]) {
+                ORKChoiceOtherViewCell *choiceOtherViewCell = (ORKChoiceOtherViewCell *)choiceViewCell;
+                choiceOtherViewCell.delegate = self;
+            }
             choiceViewCell.useCardView = [self formStep].useCardView;
             choiceViewCell.isLastItem = isLastItem;
             choiceViewCell.isFirstItemInSectionWithoutTitle = isFirstItemWithSectionWithoutTitle;
@@ -962,6 +1031,8 @@
                     formCell.isFirstItemInSectionWithoutTitle = isFirstItemWithSectionWithoutTitle;
                     cell = formCell;
                 }
+            } else {
+                NSAssert(NO, @"SHOULD NOT FALL IN HERE");
             }
         }
     }
@@ -1006,34 +1077,18 @@
     ORKFormItemCell *cell = (ORKFormItemCell *)[tableView cellForRowAtIndexPath:indexPath];
     if ([cell isKindOfClass:[ORKFormItemCell class]]) {
         [cell becomeFirstResponder];
+        [_tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionNone animated:YES];
     } else {
         // Dismiss other textField's keyboard
         [tableView endEditing:NO];
         
         ORKTableSection *section = _sections[indexPath.section];
-        ORKTableCellItem *cellItem = section.items[indexPath.row];
-        [section.textChoiceCellGroup didSelectCellAtIndexPath:indexPath];
-        id answer = ([cellItem.formItem.answerFormat isKindOfClass:[ORKBooleanAnswerFormat class]]) ? [section.textChoiceCellGroup answerForBoolean] : [section.textChoiceCellGroup answer];
-        NSString *formItemIdentifier = cellItem.formItem.identifier;
-        if (answer && formItemIdentifier) {
-            [self setAnswer:answer forIdentifier:formItemIdentifier];
-        } else if (answer == nil && formItemIdentifier) {
-            [self removeAnswerForIdentifier:formItemIdentifier];
-        }
-        
-        _skipped = NO;
-        [self updateButtonStates];
-        [self notifyDelegateOnResultChange];
+        [section.textChoiceCellGroup didSelectCellAtIndexPath:[self unhiddenIndexPathForIndexPath:indexPath]];
     }
-    [_tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionNone animated:YES];
+    [self hideSections];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-
-    if ([[self tableView:tableView cellForRowAtIndexPath:indexPath] isKindOfClass:[ORKChoiceViewCell class]]) {
-        ORKTableCellItem *cellItem = ([_sections[indexPath.section] items][indexPath.row]);
-        return [ORKChoiceViewCell suggestedCellHeightForShortText:cellItem.choice.text LongText:cellItem.choice.detailText inTableView:_tableView];
-    }
     return UITableViewAutomaticDimension;
 }
 
@@ -1149,6 +1204,49 @@ static NSString *const _ORKOriginalAnswersRestoreKey = @"originalAnswers";
     for (ORKFormItemCell *cell in _formItemCells) {
         [cell setExpectedLayoutWidth:size.width];
     }
+}
+
+
+#pragma mark ORKTextChoiceCellGroupDelegate
+
+- (void)answerChangedForIndexPath:(NSIndexPath *)indexPath {
+    NSIndexPath *hiddenIndexPath = [self hiddenIndexPathForIndexPath:indexPath];
+    ORKTableSection *section = _sections[hiddenIndexPath.section];
+    ORKTableCellItem *cellItem = section.items[hiddenIndexPath.row];
+    id answer = ([cellItem.formItem.answerFormat isKindOfClass:[ORKBooleanAnswerFormat class]]) ? [section.textChoiceCellGroup answerForBoolean] : [section.textChoiceCellGroup answer];
+    NSString *formItemIdentifier = cellItem.formItem.identifier;
+    if (answer && formItemIdentifier) {
+        [self setAnswer:answer forIdentifier:formItemIdentifier];
+    } else if (answer == nil && formItemIdentifier) {
+        [self removeAnswerForIdentifier:formItemIdentifier];
+    }
+    
+    _skipped = NO;
+    [self updateButtonStates];
+    [self notifyDelegateOnResultChange];
+}
+
+- (void)tableViewCellHeightUpdated {
+    [_tableView reloadData];
+}
+
+#pragma mark - ORKChoiceOtherViewCellDelegate
+
+- (void)textChoiceOtherCellDidBecomeFirstResponder:(ORKChoiceOtherViewCell *)choiceOtherViewCell {
+    _currentFirstResponderCell = choiceOtherViewCell;
+    NSIndexPath *path = [_tableView indexPathForCell:choiceOtherViewCell];
+    if (path) {
+        [_tableContainer scrollCellVisible:choiceOtherViewCell animated:YES];
+    }
+}
+
+- (void)textChoiceOtherCellDidResignFirstResponder:(ORKChoiceOtherViewCell *)choiceOtherViewCell {
+    if (_currentFirstResponderCell == choiceOtherViewCell) {
+        _currentFirstResponderCell = nil;
+    }
+    NSIndexPath *indexPath = [_tableView indexPathForCell:choiceOtherViewCell];
+    ORKTableSection *section = _sections[indexPath.section];
+    [section.textChoiceCellGroup textViewDidResignResponderForCellAtIndexPath:indexPath];
 }
 
 @end
